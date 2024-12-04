@@ -4,10 +4,12 @@
 import fileinput
 from itertools import takewhile
 
-def parse(itr) -> list[int]:
+Buckets = list[int]
+
+def parse(itr) -> Buckets:
     return sorted(map(int, itr))
 
-def crunch(buckets: list[int], index: int, alloted: int, used: int):
+def crunch(buckets: Buckets, index: int, alloted: int, used: int):
     if alloted == 0:
         yield used
     else:
@@ -16,7 +18,7 @@ def crunch(buckets: list[int], index: int, alloted: int, used: int):
         for i in indices:
             yield from crunch(buckets, i + 1, alloted - buckets[i], used + 1)
 
-def solve(buckets: list, n: int) -> int:
+def solve(buckets: Buckets, n: int) -> int:
     combs = crunch(buckets, 0, n, 0)
     best = next(combs)
     count = 1
