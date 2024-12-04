@@ -19,7 +19,7 @@ def diag(M: Mat, i: int, j: int, sign: int) -> str:
 
 def f(M: Mat) -> int:
     digs = 0
-    for i in range(0, len(M) - 2):
+    for i in range(len(M) - 2):
         for j in range(len(M[i]) - 2):
             diags = map(lambda offs, sign: diag(M, i, j + offs, sign),
                         (0, 2),
