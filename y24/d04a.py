@@ -28,7 +28,7 @@ def f(M: Mat) -> int:
         for begin, sign in (0, 1), (3, -1):
             for j in range(begin, begin + len(M[i]) - 3):
                 digs += xmas_n(diag(M, i, j, sign))
-    return sum((rows, cols, digs))
+    return rows + cols + digs
 
 def main():
     M = parse(fileinput.input())
