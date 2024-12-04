@@ -11,7 +11,7 @@ Mat = list[str]
 def parse(itr) -> Mat:
     return [*map(str.strip, itr)]
 
-def is_mas(s: str) -> int:
+def is_mas(s: str) -> bool:
     return s in {"MAS", "SAM"}
 
 def diag(M: Mat, i: int, j: int, sign: int) -> str:
