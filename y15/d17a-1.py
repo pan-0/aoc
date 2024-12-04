@@ -2,21 +2,27 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import fileinput
+from bisect import bisect_right
 from itertools import takewhile
+from functools import cache
 
-def parse(itr) -> list[int]:
-    return sorted(map(int, itr))
+class Buckets(list[int]):
+    def __hash__(self) -> int:
+        return id(self)
 
-def crunch(buckets: list[int], index: int, alloted: int) -> int:
+def parse(itr) -> Buckets:
+    return Buckets(sorted(map(int, itr)))
+
+@cache
+def crunch(buckets: Buckets, index: int, alloted: int) -> int:
     if alloted == 0:
         return 1
 
-    indices = takewhile(lambda i: buckets[i] <= alloted,
-                        range(index, len(buckets)))
+    end = bisect_right(buckets, alloted, lo=index)
     return sum(map(lambda i: crunch(buckets, i + 1, alloted - buckets[i]),
-                   indices))
+                   range(index, end)))
 
-def solve(buckets: list, n: int) -> int:
+def solve(buckets: Buckets, n: int) -> int:
     return crunch(buckets, 0, n)
 
 def main():

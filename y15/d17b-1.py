@@ -2,21 +2,29 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import fileinput
-from itertools import takewhile
+from bisect import bisect_right
+from functools import cache
 
-def parse(itr) -> list[int]:
-    return sorted(map(int, itr))
+class Buckets(list[int]):
+    def __hash__(self) -> int:
+        return id(self)
 
-def crunch(buckets: list[int], index: int, alloted: int, used: int):
+def parse(itr) -> Buckets:
+    return Buckets(sorted(map(int, itr)))
+
+@cache
+def find_end(buckets: Buckets, index: int, alloted: int) -> int:
+    return bisect_right(buckets, alloted, lo=index)
+
+def crunch(buckets: Buckets, index: int, alloted: int, used: int):
     if alloted == 0:
         yield used
     else:
-        indices = takewhile(lambda i: buckets[i] <= alloted,
-                            range(index, len(buckets)))
-        for i in indices:
+        end = find_end(buckets, index, alloted)
+        for i in range(index, end):
             yield from crunch(buckets, i + 1, alloted - buckets[i], used + 1)
 
-def solve(buckets: list, n: int) -> int:
+def solve(buckets: Buckets, n: int) -> int:
     combs = crunch(buckets, 0, n, 0)
     best = next(combs)
     count = 1
