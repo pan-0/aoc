@@ -3,7 +3,6 @@
 
 import fileinput
 from bisect import bisect_right
-from itertools import takewhile
 from functools import cache
 
 class Buckets(list[int]):
