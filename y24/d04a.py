@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 import fileinput
-from pprint import pprint
 
-Mat = list[str]
+Grid = list[str]
 
-def parse(itr) -> Mat:
+def parse(itr) -> Grid:
     return [*map(str.strip, itr)]
 
 def xmas_n(s: str) -> int:
@@ -17,22 +16,22 @@ def xmas_n(s: str) -> int:
 def count(itr) -> int:
     return sum(map(xmas_n, itr))
 
-def diag(M: Mat, i: int, j: int, sign: int) -> str:
-    return "".join(map(lambda offs: M[i + offs][j + sign * offs], range(4)))
+def diag(G: Grid, i: int, j: int, sign: int) -> str:
+    return "".join(map(lambda offs: G[i + offs][j + sign * offs], range(4)))
 
-def f(M: Mat) -> int:
-    rows = count(M)
-    cols = count(map("".join, zip(*M)))
+def f(G: Grid) -> int:
+    rows = count(G)
+    cols = count(map("".join, zip(*G)))
     digs = 0
-    for i in range(len(M) - 3):
+    for i in range(len(G) - 3):
         for begin, sign in (0, 1), (3, -1):
-            for j in range(begin, begin + len(M[i]) - 3):
-                digs += xmas_n(diag(M, i, j, sign))
+            for j in range(begin, begin + len(G[i]) - 3):
+                digs += xmas_n(diag(G, i, j, sign))
     return rows + cols + digs
 
 def main():
-    M = parse(fileinput.input())
-    r = f(M)
+    G = parse(fileinput.input())
+    r = f(G)
     print(r)
 
 if __name__ == "__main__":
