@@ -2,7 +2,10 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 # Need cleanup.
-y15/
+y15/d09*
+y15/d13*
+y15/d18*
+y15/d19b*
 
 tags
 tags.lock
