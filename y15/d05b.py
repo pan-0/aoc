@@ -11,7 +11,7 @@ TRIPLES = (*map(lambda p: p + p[0], PAIRS),)
 def nice(s: str) -> bool:
     for pair in PAIRS:
         i = s.find(pair)
-        if i >= 0 and pair in s[i + 2:]:
+        if i >= 0 and s.find(pair, i + 2) >= 0:
             break
     else:
         return False
