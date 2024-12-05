@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: 0BSD
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
-from __future__ import annotations
-
 import fileinput
 from dataclasses import dataclass, field
 from functools import partial
@@ -23,10 +21,10 @@ def parse(itr):
                 takewhile(lambda line: line != "\n", itr))
     V = {}
     for lhs, rhs in rules:
-        node = V.get(lhs)
-        if node is None:
-            node = V[lhs] = Node(lhs)
-        node.successors.add(rhs)
+        v = V.get(lhs)
+        if v is None:
+            v = V[lhs] = Node(lhs)
+        v.successors.add(rhs)
 
     updates = map(lambda line: map(int, line.strip().split(',')), itr)
     return (V, updates)
@@ -36,8 +34,9 @@ Update = list[int]
 def update_bad(V: Vertices, update: Update) -> bool:
     length = len(update)
     for i in range(length - 1):
-        if any(map(lambda j: not V[update[i]].is_predecessor(update[j]),
-                   range(i + 1, length))):
+        v = V.get(update[i])
+        if v is None or any(map(lambda j: not v.is_predecessor(update[j]),
+                                range(i + 1, length))):
             return True
     return False
 
@@ -45,7 +44,8 @@ def update_fixed(V: Vertices, update: Update) -> Update:
     fixed = []
     for page in update:
         i = 0
-        while i < len(fixed) and V[fixed[i]].is_predecessor(page):
+        while i < len(fixed) and (v := V.get(fixed[i])) is not None and \
+                v.is_predecessor(page):
             i += 1
         fixed.insert(i, page)
     return fixed
