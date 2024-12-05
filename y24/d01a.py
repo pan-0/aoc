@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: 0BSD
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
-from __future__ import annotations
-
 import fileinput
 import heapq
 
