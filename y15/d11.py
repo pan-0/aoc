@@ -28,8 +28,8 @@ class Numbers:
     def numbers(passw: str) -> list[int]:
         nums = [*map(base0, passw)]
         try:
-            blocked = next(filter(lambda i: i >= 0, map(passw.find, BLOCKED)))
-        except StopIteration:
+            blocked = min(filter(lambda i: i >= 0, map(passw.find, BLOCKED)))
+        except ValueError:
             pass
         else:
             nums[blocked] = Numbers.SEQUENCE[nums[blocked]]
