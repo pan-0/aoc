@@ -37,7 +37,7 @@ def solve(triples: list[Triple], t_end: int) -> int:
                 state.rem = triple.dur if state.rest else triple.rest
                 state.rest ^= True
 
-    return max(states, key=lambda s: s.points).points
+    return max(map(lambda s: s.points, states))
 
 def main():
     triples = sorted(map(parse, fileinput.input()), key=lambda t: t.dur)
