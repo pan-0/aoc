@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: 0BSD
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
+import array
 import fileinput
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -13,7 +14,7 @@ class Point:
 class Lights:
     def __init__(self, rows: int, cols: int):
         self.cols = cols
-        self.vals = [0] * (rows * cols)
+        self.vals = array.array('I', (0,)) * (rows * cols)
 
     def increase(self, begin: Point, end: Point, amount: int):
         vals, cols = self.vals, self.cols
