@@ -2,7 +2,6 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import sys
-from itertools import islice
 
 def lns(n: bytearray) -> bytearray:
     r = bytearray()
