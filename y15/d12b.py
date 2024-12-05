@@ -16,7 +16,7 @@ def f(doc) -> int:
         elif isinstance(obj, dict):
             if "red" not in obj.values():
                 queue.extend(obj.values())
-        elif isinstance(obj, str):
+        elif isinstance(obj, str) or isinstance(obj, float):
             pass
         else:
             raise ValueError

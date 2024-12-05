@@ -15,7 +15,7 @@ def f(doc) -> int:
             queue.extend(obj)
         elif isinstance(obj, dict):
             queue.extend(obj.values())
-        elif isinstance(obj, str):
+        elif isinstance(obj, str) or isinstance(obj, float):
             pass
         else:
             raise ValueError
