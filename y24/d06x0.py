@@ -70,9 +70,9 @@ def main():
     G = Grid([*parse(fileinput.input())])
     pos = guard_pos(G)
     locs = set()
-    _ = patrol(G, pos, locs)
+    _ = patrol(G, pos + OFFSETS[0], locs)
     positions = {*map(lambda tup: tup[0], locs)}
-    ra = len(positions)
+    ra = len(positions | {pos})
     rb = obstructions(G, pos, positions)
     print(ra, rb)
 
