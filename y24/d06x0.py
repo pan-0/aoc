@@ -72,7 +72,7 @@ def main():
     locs = set()
     _ = patrol(G, pos + OFFSETS[0], locs)
     positions = {*map(lambda tup: tup[0], locs)}
-    ra = len(positions | {pos})
+    ra = len(positions) + (1 if pos not in positions else 0)
     rb = obstructions(G, pos, positions)
     print(ra, rb)
 
