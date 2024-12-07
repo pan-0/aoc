@@ -22,8 +22,7 @@ def is_sat(lhs: int, rhs: list[int], length: int) -> bool:
         return False
 
     q, r = divmod(lhs, last)
-    sat = (r == 0 and is_sat(q, rhs, end)) or is_sat(lhs - last, rhs, end)
-    if sat:
+    if (r == 0 and is_sat(q, rhs, end)) or is_sat(lhs - last, rhs, end)
         return True
 
     q, r = divmod(lhs, 10 ** len(str(last)))
