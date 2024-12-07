@@ -21,9 +21,12 @@ def main():
             l = lst[0]
             for i, op in enumerate(ops, start=1):
                 l = op(l, lst[i])
-            if l == r:
-                c += r
-                break
+                if l > r:
+                    break
+            else:
+                if l == r:
+                    c += r
+                    break
     print(c)
 
 if __name__ == "__main__":
