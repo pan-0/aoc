@@ -32,8 +32,7 @@ def is_sat(lhs: int, rhs: list[int], length: int) -> bool:
 def main():
     inp = map(parse, fileinput.input())
     r = sum(map(lambda equ: equ.lhs,
-                filter(lambda equ: is_sat(equ.lhs, equ.rhs, len(equ.rhs)),
-                       inp)))
+                filter(lambda equ: is_sat(*equ, len(equ.rhs)), inp)))
     print(r)
 
 if __name__ == "__main__":
