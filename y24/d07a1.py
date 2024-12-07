@@ -13,8 +13,8 @@ def parse(s: str) -> Equ:
     return Equ(int(r), [*map(int, nums.strip().split(' '))])
 
 def is_sat(lhs: int, rhs: list[int], length: int) -> bool:
-    if length == 0:
-        return lhs == 0
+    if length == 1:
+        return lhs == rhs[0]
 
     end = length - 1
     last = rhs[end]
