@@ -52,7 +52,7 @@ def antennas(G: Grid) -> Antennas:
 def f(G: Grid, A: Antennas) -> int:
     antinodes = set()
     for L in A.values():
-        for a0, a1 in map(sorted, combinations(L, r=2)):
+        for a0, a1 in combinations(L, r=2):
             diff = a1 - a0
             for antinode, step in (a0, -diff), (a1, diff):
                 while G.is_inbounds(antinode):
