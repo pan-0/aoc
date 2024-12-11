@@ -2,20 +2,16 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import fileinput
-from collections import defaultdict
+from collections import Counter
 
 Stones = dict[int, int]
 
 def parse(itr) -> Stones:
-    stones = defaultdict(int)
-    inp = map(int, next(itr).strip().split(' '))
-    for stone in inp:
-        stones[stone] += 1
-    return stones
+    return Counter(map(int, next(itr).strip().split(' ')))
 
 def f(stones: Stones) -> int:
     for _ in range(75):
-        next_stones = defaultdict(int)
+        next_stones = Counter()
         for stone, count in stones.items():
             if stone == 0:
                 next_stones[1] += count
