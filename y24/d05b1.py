@@ -2,13 +2,13 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import fileinput
+from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import cmp_to_key, partial
 from itertools import takewhile
 
 @dataclass(frozen=True)
 class Node:
-    num: int
     successors: set[int] = field(default_factory=set)
 
     def is_predecessor(self, num: int) -> bool:
@@ -19,12 +19,9 @@ Vertices = dict[int, Node]
 def parse(itr):
     rules = map(lambda line: map(int, line.strip().split('|')),
                 takewhile(lambda line: line != "\n", itr))
-    V = {}
+    V = defaultdict(Node)
     for lhs, rhs in rules:
-        v = V.get(lhs)
-        if v is None:
-            v = V[lhs] = Node(lhs)
-        v.successors.add(rhs)
+        V[lhs].successors.add(rhs)
 
     updates = map(lambda line: map(int, line.strip().split(',')), itr)
     return (V, updates)

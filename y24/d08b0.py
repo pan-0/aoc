@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import fileinput
+from collections import defaultdict
 from operator import add, sub, neg
 from itertools import combinations
 from typing import NamedTuple
@@ -39,14 +40,11 @@ def parse(itr) -> Grid:
 Antennas = dict[str, list[Vec2]]
 
 def antennas(G: Grid) -> Antennas:
-    A = {}
+    A = defaultdict(list)
     for i, row in enumerate(G):
         for j, c in enumerate(row):
             if c != '.':
-                L = A.get(c)
-                if L is None:
-                    L = A[c] = []
-                L.append(Vec2(i, j))
+                A[c].append(Vec2(i, j))
     return A
 
 def f(G: Grid, A: Antennas) -> int:

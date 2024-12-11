@@ -2,6 +2,7 @@
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
 import fileinput
+from collections import Counter
 
 Left = list[int]
 Right = dict[int, int]
@@ -9,10 +10,10 @@ Right = dict[int, int]
 def parse(itr) -> tuple[Left, Right]:
     pairs = map(lambda line: map(int, line.strip().split("   ")), itr)
     L = []
-    R = {}
+    R = Counter()
     for x, y in pairs:
         L.append(x)
-        R[y] = R.get(y, 0) + 1
+        R[y] += 1
     return (L, R)
 
 def f(L: Left, R: Right) -> int:
