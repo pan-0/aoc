@@ -10,7 +10,8 @@ def parse(itr) -> Stones:
 
 def f(stones: Stones) -> int:
     for _ in range(25):
-        for i, stone in enumerate(stones):
+        for i in range(len(stones)):
+            stone = stones[i]
             if stone == 0:
                 stones[i] = 1
             elif (digits := len(str(stone))) & 1 == 0:
