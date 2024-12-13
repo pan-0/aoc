@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: 0BSD
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
+__pycache__/
+*.pyc
+.mypy_cache/
+
 # Need cleanup.
 y15/d09*
 y15/d13*
