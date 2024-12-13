@@ -76,6 +76,23 @@ def identity(x: T) -> T:
 def joinlines(itr: Iterator[str], strip=True) -> str:
     return "".join(map(str.strip if strip else identity, itr))
 
+class DebugPrint:
+    def __init__(self, enabled=True):
+        self.enabled = enabled
+
+    def on(self):
+        self.enabled = True
+
+    def off(self):
+        self.enabled = False
+
+    def toggle(self):
+        self.enabled ^= True
+
+    def __call__(self, *args, **kwargs):
+        if self.enabled:
+            print(*args, **kwargs)
+
 class Pair(NamedTuple, Generic[T, U]):
     f: T
     s: U
