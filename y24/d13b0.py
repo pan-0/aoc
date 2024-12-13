@@ -46,10 +46,9 @@ def win_comb(m: Machine) -> Optional[tuple[int, int]]:
     if denom != 0:
         xa = (m.bx * m.py - m.px * m.by) / denom
         xb = (m.px * m.ay - m.ax * m.py) / denom
-        if all(map(float.is_integer, (xa, xb))):
-            pushes = (*map(int, (xa, xb)),)
-            if all(map(lambda push: push >= 0, pushes)):
-                return pushes
+        if all(map(lambda push: push >= 0, (xa, xb))) and \
+                all(map(float.is_integer, (xa, xb))):
+            return (*map(int, (xa, xb)),)
     return None
 
 def main():
