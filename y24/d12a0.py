@@ -36,6 +36,8 @@ def parse(itr) -> Grid:
 
 Regions = dict[Vec2, set[Vec2]]
 
+ADJACENT = [Vec2(-1, 0), Vec2(1, 0), Vec2(0, -1), Vec2(0, 1)]
+
 def garden_regions(G: Grid) -> Regions:
     regions = defaultdict(set)
     found = set()
@@ -51,18 +53,13 @@ def garden_regions(G: Grid) -> Regions:
                         G[plot] == plant:
                     found.add(plot)
                     plots.add(plot)
-                    stack.extend((plot - Vec2(0, 1),
-                                  plot + Vec2(0, 1),
-                                  plot - Vec2(1, 0),
-                                  plot + Vec2(1, 0)))
+                    stack.extend(map(lambda offs: plot + offs, ADJACENT))
     return regions
 
 def perim(region: set[Vec2]) -> int:
     adj = 0
     for plot in region:
-        for offs in (Vec2(-1, 0), Vec2(1, 0), Vec2(0, -1), Vec2(0, 1)):
-            if plot + offs in region:
-                adj += 1
+        adj += sum(map(lambda offs: plot + offs in region, ADJACENT))
     return 4 * len(region) - adj
 
 def main():
