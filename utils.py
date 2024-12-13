@@ -179,16 +179,17 @@ class Grid(Generic[T]):
         v = self._to_vec(key)
         return self.data[v.x][v.y] if self.is_inbounds(v) else default
 
+    def row(self, idx: int) -> Sequence[T]:
+        return self.data[idx]
+
     def __contains__(self, key: T) -> bool:
         return any(map(lambda row: key in row, self.data))
 
-    def __getitem__(self, key: int | Index) -> T | Sequence[T]:
-        if isinstance(key, int):
-            return self.data[key]
+    def __getitem__(self, key: Index) -> T:
         v = self._to_vec(key)
         return self.data[v.x][v.y]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sequence[T]]:
         return iter(self.data)
 
     def __repr__(self) -> str:
