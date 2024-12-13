@@ -45,14 +45,13 @@ def garden_regions(G: Grid) -> Regions:
         for j in range(G.cols):
             orig = Vec2(i, j)
             plant = G[orig]
-            plots = regions[orig]
             stack = [orig]
             while stack:
                 plot = stack.pop()
                 if plot not in found and G.is_inbounds(plot) and \
                         G[plot] == plant:
                     found.add(plot)
-                    plots.add(plot)
+                    regions[orig].add(plot)
                     stack.extend(map(lambda offs: plot + offs, ADJACENT))
     return regions
 
