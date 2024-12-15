@@ -41,16 +41,12 @@ def move_end(G: Grid, pos: Vec2, vec: Vec2) -> Vec2:
 def walk(G: Grid, robot: Vec2, moves: Iterator[Adjacents]):
     for move in moves:
         vec = move.vec
-        it = move_end(G, robot, vec)
-        if it != robot:
-            while True:
-                prev = it - vec
-                G[it] = G[prev]
-                G[prev] = Cell.EMPTY
-                it = prev
-                if it == robot:
-                    break
+        end = move_end(G, robot, vec)
+        if end != robot:
+            G[end] = Cell.BOX
+            G[robot] = Cell.EMPTY
             robot += vec
+            G[robot] = Cell.ROBOT
 
 def box_cords(G: Grid) -> Iterator[int]:
     for i in range(1, G.rows - 1):
