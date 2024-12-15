@@ -22,7 +22,7 @@ class Cell(Enum):
 Vec2 = utils.Vec2[int]
 Grid = utils.MutGrid[Cell]
 
-def cell(c: str) -> Cell:
+def cell(c: str) -> tuple[Cell, Cell]:
     return {'#': (Cell.WALL,  Cell.WALL),  '.': (Cell.EMPTY, Cell.EMPTY),
             'O': (Cell.BOX_L, Cell.BOX_R), '@': (Cell.ROBOT, Cell.EMPTY)}[c]
 
@@ -35,7 +35,7 @@ def parse(itr) -> tuple[Grid, Iterator[Adjacents]]:
                    takewhile(lambda line: line != "\n", itr))])
     return (G, map(move, chain.from_iterable(map(str.strip, itr))))
 
-def horizontal_end(G: Grid, pos: Vec2, vec: Vec2) -> tuple[Vec2, Vec2]:
+def horizontal_end(G: Grid, pos: Vec2, vec: Vec2) -> Vec2:
     end = pos + vec
     while G[end] in {Cell.BOX_L, Cell.BOX_R}:
         end += vec
