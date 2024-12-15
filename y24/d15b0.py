@@ -23,16 +23,12 @@ Vec2 = utils.Vec2[int]
 Grid = utils.MutGrid[Cell]
 
 def cell(c: str) -> Cell:
-    return {'#': (Cell.WALL,  Cell.WALL),
-            '.': (Cell.EMPTY, Cell.EMPTY),
-            'O': (Cell.BOX_L, Cell.BOX_R),
-            '@': (Cell.ROBOT, Cell.EMPTY)}[c]
+    return {'#': (Cell.WALL,  Cell.WALL),  '.': (Cell.EMPTY, Cell.EMPTY),
+            'O': (Cell.BOX_L, Cell.BOX_R), '@': (Cell.ROBOT, Cell.EMPTY)}[c]
 
 def move(c: str) -> Adjacents:
-    return {'^': Adjacents.UP,
-            'v': Adjacents.DOWN,
-            '<': Adjacents.LEFT,
-            '>': Adjacents.RIGHT}[c]
+    return {'^': Adjacents.UP,   'v': Adjacents.DOWN,
+            '<': Adjacents.LEFT, '>': Adjacents.RIGHT}[c]
 
 def parse(itr) -> tuple[Grid, Iterator[Adjacents]]:
     G = Grid([*map(lambda row: [*chain.from_iterable(map(cell, row.strip()))],
@@ -55,7 +51,7 @@ def box_other(G: Grid, box: Vec2) -> Vec2:
 
 def has_space(G: Grid, vec: Vec2, box_l: Vec2) -> bool:
     box_r = box_l + Adjacents.RIGHT.vec
-    return all(map(lambda half: G[half + vec] != Cell.WALL, (box_l, box_r)))
+    return G[box_l + vec] != Cell.WALL and G[box_r + vec] != Cell.WALL
 
 def vertical_moves(G: Grid, pos: Vec2, vec: Vec2) -> Optional[list[Vec2]]:
     end = pos + vec
@@ -70,8 +66,8 @@ def vertical_moves(G: Grid, pos: Vec2, vec: Vec2) -> Optional[list[Vec2]]:
                         key=lambda v: G[v] in {Cell.BOX_L, Cell.BOX_R},
                         adj=lambda box: (box + vec, box_other(G, box) + vec)))}
     if all(map(partial(has_space, G, vec), boxes)):
-        return sorted(boxes, key=lambda box: (*reversed(abs(box - pos)),),
-                      reverse=True)
+        return sorted(boxes, key=lambda box: abs(box.y - pos.y), reverse=True)
+
     return None
 
 def walk(G: Grid, robot: Vec2, moves: Iterator[Adjacents]):
@@ -89,17 +85,15 @@ def walk(G: Grid, robot: Vec2, moves: Iterator[Adjacents]):
                 G[robot] = Cell.EMPTY
                 robot += vec
                 G[robot] = Cell.ROBOT
-        else:
-            it = horizontal_end(G, robot, vec)
-            if it != robot:
-                while True:
-                    prev = it - vec
-                    G[it] = G[prev]
-                    G[prev] = Cell.EMPTY
-                    it = prev
-                    if it == robot:
-                        break
-                robot += vec
+        elif (it := horizontal_end(G, robot, vec)) != robot:
+            while True:
+                prev = it - vec
+                G[it] = G[prev]
+                G[prev] = Cell.EMPTY
+                it = prev
+                if it == robot:
+                    break
+            robot += vec
 
 def box_cords(G: Grid) -> Iterator[int]:
     for i in range(1, G.rows - 1):
