@@ -241,9 +241,6 @@ class GridBase(Generic[T]):
     def row(self, idx: int) -> Sequence[T]:
         return self.data[idx]
 
-    def copy(self) -> Self:
-        return type(self)(copy.deepcopy(self.data))
-
     def __contains__(self, key: T) -> bool:
         return any(map(lambda row: key in row, self.data))
 
@@ -311,10 +308,13 @@ class MutGrid(GridBase[T]):
         super().__init__(data)
         self.mut_data = data
 
-    def clear(self, filler: T):
+    def copy(self) -> Self:
+        return MutGrid(copy.deepcopy(self.mut_data))
+
+    def clear_with(self, val: T):
         for row in self.mut_data:
             for j in range(len(row)):
-                row[j] = filler
+                row[j] = val
 
     def __setitem__(self, key: MutGrid.Index, val: T) -> T:
         v = self._to_vec(key)
