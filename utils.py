@@ -11,6 +11,7 @@ import re
 from collections import deque
 from collections.abc import Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
+from enum import Enum
 from functools import partialmethod
 from itertools import chain, islice
 from typing import Generic, NamedTuple, Optional, Self, TypeVar
@@ -125,8 +126,11 @@ class Vec(Generic[N]):
     def __sub__(self, other: Self) -> Self:
         return type(self)(*map(operator.sub, self, other))
 
-    def __mul__(self, other: Self) -> Self:
-        return type(self)(*map(operator.mul, self, other))
+    def __mul__(self, other: N | Self) -> Self:
+        cls = type(self)
+        if isinstance(other, int) or isinstance(other, float):
+            return cls(*map(lambda scalar: scalar * other, self))
+        return cls(*map(operator.mul, self, other))
 
     def __mod__(self, other: Self) -> Self:
         return type(self)(*map(operator.mod, self, other))
@@ -146,17 +150,36 @@ class Vec(Generic[N]):
     def __getitem__(self, key: int) -> N:
         return self.scalars[key]
 
+    def __lt__(self, other: Self) -> bool:
+        return self.scalars < other.scalars
+
+    def __le__(self, other: Self) -> bool:
+        return self.scalars <= other.scalars
+
+    def __ge__(self, other: Self) -> bool:
+        return self.scalars >= other.scalars
+
+    def __gt__(self, other: Self) -> bool:
+        return self.scalars > other.scalars
+
+    def __len__(self) -> int:
+        return len(self.scalars)
+
     def dot(self, other: Self) -> N:
         return sum(self * other)
 
     def len(self) -> float:
         return math.sqrt(self.dot(self))
 
+    def min(self: Vec[int]) -> Vec[int]:
+        gcd = math.gcd(*self)
+        return type(self)(*map(lambda scalar: scalar // gcd, self))
+
     def __repr__(self) -> str:
         return "<" + ' '.join(map(str, self)) + ">"
 
 class Vec2(Vec[N]):
-    def __init__(self, x: N, y: N):
+    def __init__(self, x: N=0, y: N=0):
         super(Vec2, self).__init__(x, y)
 
     def __truediv__(self, other: Self) -> Vec2[float]:
@@ -170,12 +193,43 @@ class Vec2(Vec[N]):
     def y(self) -> N:
         return self.scalars[1]
 
-class GridBase(Generic[T]):
-    Index = tuple[int, int] | Vec2
+@dataclass(frozen=True)
+class Adjacent:
+    sym: str
+    vec: Vec2[int]
 
-    ADJACENT_DIAG = (Vec2(-1, -1), Vec2(-1, 1), Vec2(1, -1), Vec2(1, 1))
-    ADJACENT_CROSS = (Vec2(-1, 0), Vec2(0, -1), Vec2(0, 1), Vec2(1, 0))
-    ADJACENT = ADJACENT_DIAG + ADJACENT_CROSS
+    def __str__(self) -> str:
+        return f"{self.sym}:{self.vec}"
+
+class Adjacents(Enum):
+    UP_LEFT    = Adjacent('↖', Vec2(-1, -1))
+    LEFT       = Adjacent('←', Vec2(-1,  0))
+    DOWN_LEFT  = Adjacent('↙', Vec2(-1,  1))
+    UP         = Adjacent('↑', Vec2( 0, -1))
+    DOWN       = Adjacent('↓', Vec2( 0,  1))
+    UP_RIGHT   = Adjacent('↗', Vec2( 1, -1))
+    RIGHT      = Adjacent('→', Vec2( 1,  0))
+    DOWN_RIGHT = Adjacent('↘', Vec2( 1,  1))
+
+    @property
+    def vec(self) -> Vec2[int]:
+        return self.value.vec
+
+    def __str__(self) -> str:
+        return self.value.sym
+
+class GridBase(Generic[T]):
+    Index = tuple[int, int] | Vec2[int]
+
+    ADJACENT_DIAG  = (*map(lambda adj: adj.value.vec, (Adjacents.UP_LEFT,
+                                                       Adjacents.DOWN_LEFT,
+                                                       Adjacents.UP_RIGHT,
+                                                       Adjacents.DOWN_RIGHT)),)
+    ADJACENT_CROSS = (*map(lambda adj: adj.value.vec, (Adjacents.LEFT,
+                                                       Adjacents.UP,
+                                                       Adjacents.DOWN,
+                                                       Adjacents.RIGHT)),)
+    ADJACENT = (*map(lambda adj: adj.value.vec, Adjacents),)
 
     def __init__(self, data: Sequence[Sequence[T]]):
         if not all(map(lambda row: len(data[0]) == len(row),
@@ -192,7 +246,7 @@ class GridBase(Generic[T]):
         return cls(data)
 
     @staticmethod
-    def _to_vec(idx: Index) -> Vec2:
+    def _to_vec(idx: Index) -> Vec2[int]:
         if isinstance(idx, tuple):
             assert all(map(lambda x: isinstance(x, int), idx))
             return Vec2(*reversed(idx))
@@ -204,7 +258,7 @@ class GridBase(Generic[T]):
         v = self._to_vec(idx)
         return 0 <= v.x < self.cols and 0 <= v.y < self.rows
 
-    def _adjacent(self, idx: Index, probes=ADJACENT) -> Iterator[Vec2]:
+    def _adjacent(self, idx: Index, probes=ADJACENT) -> Iterator[Vec2[int]]:
         v = self._to_vec(idx)
         return filter(self.is_inbounds, map(lambda offs: v + offs, probes))
 
@@ -212,8 +266,10 @@ class GridBase(Generic[T]):
     adjacent_diag = partialmethod(_adjacent, probes=ADJACENT_DIAG)
     adjacent_cross = partialmethod(_adjacent, probes=ADJACENT_CROSS)
 
-    def dfs(self, at: Index, key=lambda x: True, adj=adjacent) \
-            -> Iterator[Vec2]:
+    def dfs(self, at: Index, key=lambda x: True, adj=None) \
+            -> Iterator[Vec2[int]]:
+        if adj is None:
+            adj = self.adjacent
         visited = set()
         stack = [self._to_vec(at)]
         while stack:
@@ -221,10 +277,12 @@ class GridBase(Generic[T]):
             if self.is_inbounds(vec) and vec not in visited and key(vec):
                 visited.add(vec)
                 yield vec
-                stack.extend(adj(self, vec))
+                stack.extend(adj(vec))
 
-    def bfs(self, at: Index, key=lambda x: True, adj=adjacent) \
-            -> Iterator[Vec2]:
+    def bfs(self, at: Index, key=lambda x: True, adj=None) \
+            -> Iterator[Vec2[int]]:
+        if adj is None:
+            adj = self.adjacent
         visited = set()
         queue = deque((self._to_vec(at),))
         while queue:
@@ -232,7 +290,7 @@ class GridBase(Generic[T]):
             if self.is_inbounds(vec) and vec not in visited and key(vec):
                 visited.add(vec)
                 yield vec
-                queue.extend(adj(self, vec))
+                queue.extend(adj(vec))
 
     def get(self, key: Index, default: Optional[T]=None) -> Optional[T]:
         v = self._to_vec(key)
@@ -240,6 +298,74 @@ class GridBase(Generic[T]):
 
     def row(self, idx: int) -> Sequence[T]:
         return self.data[idx]
+
+    def find(self, val: T, start=Vec2(0, 0), stop=Vec2(-1, -1)) -> Vec2[int]:
+        if stop < Vec2(0, 0):
+            stop = Vec2(self.cols, self.rows)
+
+        data = self.data
+        for i in range(start.y, stop.y):
+            j: int
+            try:
+                j = data[i].index(val, start.x, stop.x)
+            except ValueError:
+                pass
+            else:
+                return Vec2(j, i)
+        return Vec2(-1, -1)
+
+    def rfind(self, val: T, start=Vec2(0, 0), stop=Vec2(-1, -1)) -> Vec2[int]:
+        if stop < Vec2(0, 0):
+            stop = Vec2(self.cols, self.rows)
+
+        r = Vec2(-1, -1)
+        data = self.data
+        for i in range(start.y, stop.y):
+            j: int
+            try:
+                j = data[i].index(val, start.x, stop.x)
+            except ValueError:
+                pass
+            else:
+                r = Vec2(j, i)
+        return r
+
+    def count(self, val: T) -> int:
+        return sum(map(lambda row: row.count(val), self.data))
+
+    def to_str(self, delim="", rows=False, edges=False) -> str:
+        buf = io.StringIO()
+        row_pad = len(str(self.rows - 1))
+        col_pad = max(map(lambda row: max(map(len, map(str, row))), self))
+        if edges:
+            if rows:
+                buf.write(' ' * (row_pad + 1))
+            buf.write('+')
+            buf.write('-' * (self.cols * col_pad * (len(delim) + 1)))
+            buf.write("+\n")
+        for i in range(self.rows):
+            if i > 0:
+                buf.write('\n')
+            if rows:
+                buf.write(str(i).rjust(row_pad))
+                buf.write(' ')
+            if edges:
+                buf.write('|')
+            for j in range(self.cols):
+                buf.write(str(self[i, j]).rjust(col_pad))
+                buf.write(delim)
+            if edges:
+                buf.write('|')
+        if edges:
+            buf.write('\n')
+            if rows:
+                buf.write(' ' * (row_pad + 1))
+            buf.write('+')
+            buf.write('-' * (self.cols * col_pad * (len(delim) + 1)))
+            buf.write('+')
+        r = buf.getvalue()
+        buf.close()
+        return r
 
     def __contains__(self, key: T) -> bool:
         return any(map(lambda row: key in row, self.data))
@@ -302,14 +428,16 @@ class MutGrid(GridBase[T]):
         if pad is not None:
             max_col = max(map(len, data))
             for row in data:
-                assert isinstance(row, list)
                 for _ in range(len(row) - max_col):
                     row.append(pad)
         super().__init__(data)
         self.mut_data = data
 
+    def mut_row(self, idx: int) -> MutableSequence[T]:
+        return self.mut_data[idx]
+
     def copy(self) -> Self:
-        return MutGrid(copy.deepcopy(self.mut_data))
+        return type(self)(copy.deepcopy(self.mut_data))
 
     def clear_with(self, val: T):
         for row in self.mut_data:
