@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: 0BSD
 # Copyright (C) 2024 by pan <pan_@disroot.org>
 
+import fileinput
 from utils import MutGrid, Vec2, batched, integers
 
 Positions = list[Vec2[int]]
