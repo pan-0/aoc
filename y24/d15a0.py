@@ -24,10 +24,8 @@ def cell(c: str) -> Cell:
     return {'#': Cell.WALL, '.': Cell.EMPTY, 'O': Cell.BOX, '@': Cell.ROBOT}[c]
 
 def move(c: str) -> Adjacents:
-    return {'^': Adjacents.UP,
-            'v': Adjacents.DOWN,
-            '<': Adjacents.LEFT,
-            '>': Adjacents.RIGHT}[c]
+    return {'^': Adjacents.UP,   'v': Adjacents.DOWN,
+            '<': Adjacents.LEFT, '>': Adjacents.RIGHT}[c]
 
 def parse(itr) -> tuple[Grid, Iterator[Adjacents]]:
     G = Grid([*map(lambda row: [*map(cell, row.strip())],
