@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partialmethod
 from itertools import chain, islice
-from typing import Generic, NamedTuple, Optional, Self, TypeVar
+from typing import Callable, Generic, NamedTuple, Optional, Self, TypeVar
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -73,6 +73,10 @@ def ilen(itr: Iterator[T]) -> int:
         pass
     return i
 
+def apply(func: Callable[..., T], *iterables):
+    for args in zip(*iterables):
+        func(*args)
+
 def identity(x: T) -> T:
     return x
 
@@ -83,18 +87,61 @@ class DebugPrint:
     def __init__(self, enabled=True):
         self.enabled = enabled
 
-    def on(self):
+    def on(self) -> Self:
         self.enabled = True
+        return self
 
-    def off(self):
+    def off(self) -> Self:
         self.enabled = False
+        return self
 
-    def toggle(self):
+    def toggle(self) -> Self:
         self.enabled ^= True
+        return self
 
-    def __call__(self, *args, **kwargs):
+    def peek(self, itr: Iterator[T], sep=" ", end="\n") -> Iterator[T]:
+        for x in itr:
+            self(x, end=sep)
+            yield x
+        self(end=end)
+
+    def map(self,
+            func: Callable[..., T],
+            *iterables,
+            sep=", ",
+            end="\n",
+            out=0) -> Iterator[T]:
+        """
+        out=0 => in
+        out=1 => in -> out
+        out=2 => out
+        """
+        if not 0 <= out <= 2:
+            raise ValueError
+
+        for args in zip(*iterables):
+            r = func(*args)
+            self(("{0}",
+                  "{0} -> {1}",
+                  "{1}")[out].format(args if len(args) > 1 else args[0], r),
+                 end=sep)
+            yield r
+        self(end=end)
+
+    def take(self, itr: Iterator[T], sep=" ", end="\n") -> Self:
+        for x in itr:
+            self(x, end=sep)
+        self(end=end)
+        return self
+
+    def identity(self, x: T, end="\n") -> T:
+        self(x, end=end)
+        return x
+
+    def __call__(self, *args, **kwargs) -> Self:
         if self.enabled:
             print(*args, **kwargs)
+        return self
 
 class Pair(NamedTuple, Generic[T, U]):
     f: T
@@ -377,6 +424,11 @@ class GridBase(Generic[T]):
     def __iter__(self) -> Iterator[Sequence[T]]:
         return iter(self.data)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GridBase):
+            raise ValueError
+        return self.data == other.data
+
     def __repr__(self) -> str:
         buf = io.StringIO()
         row_pad = len(str(self.rows - 1))
@@ -410,11 +462,6 @@ class Grid(GridBase[T]):
             for col in row:
                 h ^= hash(col)
         return h
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Grid):
-            raise ValueError
-        return self.data == other.data
 
     def __repr__(self) -> str:
         if self.repr is None:
@@ -464,6 +511,7 @@ def main():
     G = Grid([(1, 2, 38732194823),
               (3, 4, 16214323243)])
     print(G,
+          G == G,
           [*G.bfs((0, 0))],
           [*G.dfs((0, 0))],
           [*G.adjacent((0, 0))],
