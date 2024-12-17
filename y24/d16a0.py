@@ -54,7 +54,7 @@ def main():
     grid = parse(fileinput.input())
     S = grid.find('S')
     graph = build_graph(grid, S)
-    dists = dijkstra(graph, (S, Vec2()), len(graph) * 1000)
+    dists = dijkstra(graph, (S, Vec2()), len(graph) * 1001)
     E = grid.find('E')
     r = min(filter(lambda dist: dist is not None,
                    map(lambda vec: dists.get((E, vec)), grid.ADJACENT_CROSS)))
