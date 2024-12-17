@@ -8,13 +8,15 @@ import io
 import math
 import operator
 import re
+import sys
 from collections import deque
 from collections.abc import Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import partialmethod
 from itertools import chain, islice
-from typing import Callable, Generic, NamedTuple, Optional, Self, TypeVar
+from typing import (Callable, Generic, NamedTuple, Optional, Self, TypeVar,
+                    NoReturn)
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -32,6 +34,13 @@ except ImportError:
             if strict and len(batch) != n:
                 raise ValueError("batched(): incomplete batch")
             yield batch
+
+class UnreachableError(RuntimeError):
+    pass
+
+def unreachable(*args, **kwargs) -> NoReturn:
+    print(*args, file=sys.stderr, **kwargs)
+    raise UnreachableError
 
 def integers(itr: Iterator[str], signed=True) -> Iterator[int]:
     uint_pat = r"(?:0|[1-9]\d*)"
@@ -58,14 +67,14 @@ def take(itr: Iterator[T], n: int, *, strict=False) -> Iterator[T]:
     # take("ABCDEFG", -1) -> ABCDEFG
     if n < -1:
         raise ValueError("n must be int [-1, +inf)")
-    it = iter(itr)
-    i = 0
-    for i, x in enumerate(it):
-        if i == n:
-            break
-        yield x
-    if strict and n != -1 and i != n:
-        raise ValueError("take(): incomplete iterator")
+    if n != 0:
+        it = iter(itr)
+        for i, x in enumerate(it, start=1):
+            yield x
+            if i == n:
+                break
+        if strict and n != -1 and i != n:
+            raise ValueError("take(): incomplete iterator")
 
 def ilen(itr: Iterator[T]) -> int:
     i = 0
