@@ -59,7 +59,7 @@ def vertical_moves(G: Grid, pos: Vec2, vec: Vec2) -> Optional[set[Vec2]]:
         return None
 
     if G[end] == Cell.EMPTY:
-        return {}
+        return set()
 
     boxes = {*map(partial(box_left, G),
                   G.dfs(end,
