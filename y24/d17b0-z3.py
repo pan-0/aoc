@@ -4,23 +4,22 @@ import z3
 from itertools import islice
 from utils import integers, unreachable
 
-Registers = list[z3.BitVec]
 Instructions = list[int]
 
 BIT_WIDTH = 64
 
-def parse(itr) -> tuple[Registers, Instructions]:
+def parse(itr) -> Instructions:
     nums = integers(itr)
     return [*islice(nums, 3, None)]
 
-def operand(regs: Registers, opr: int) -> z3.BitVec:
+def operand(regs: Registers, opr: int):
     match opr:
         case lit if 0 <= lit <= 3: return z3.BitVecVal(lit, BIT_WIDTH) & 3
         case reg if 4 <= reg <= 6: return regs[reg - 4]
         case _:
             unreachable("invalid operand: ", opr)
 
-def run(regs: Registers, insns: Instructions, out: int):
+def run(regs, insns: Instructions, out: int):
     for i in range(0, len(insns), 2):
         opr = insns[i + 1]
         match insns[i]:
