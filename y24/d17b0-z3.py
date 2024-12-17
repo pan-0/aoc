@@ -12,21 +12,21 @@ def parse(itr) -> Instructions:
     nums = integers(itr)
     return [*islice(nums, 3, None)]
 
-def operand(regs, opr: int):
+def operand(regs: list, opr: int):
     match opr:
-        case lit if 0 <= lit <= 3: return z3.BitVecVal(lit, BIT_WIDTH) & 3
+        case lit if 0 <= lit <= 3: return z3.BitVecVal(lit, BIT_WIDTH)
         case reg if 4 <= reg <= 6: return regs[reg - 4]
         case _:
             unreachable("invalid operand: ", opr)
 
-def run(regs, insns: Instructions, out: int):
+def run(regs: list, insns: Instructions, out: int):
     for i in range(0, len(insns), 2):
         opr = insns[i + 1]
         match insns[i]:
             case 0:  # adv
                 regs[0] = regs[0] >> operand(regs, opr)
             case 1:  # bxl
-                regs[1] = regs[1] ^ (z3.BitVecVal(opr, BIT_WIDTH) & 7)
+                regs[1] = regs[1] ^ z3.BitVecVal(opr, BIT_WIDTH)
             case 2:  # bst
                 regs[1] = operand(regs, opr) & 7
             case 3:  # jnz
