@@ -63,13 +63,13 @@ def tiles_n(graph: Graph, S: Vec2, E: Vec2) -> int:
     dists, paths = dijkstra(graph, (S, Vec2()), inf_dist)
 
     stack = []
-    best = (inf_dist, Vec2())
+    best = inf_dist
     for vec in Grid.ADJACENT_CROSS:
         if (dist := dists.get((E, vec))) is not None:
-            if dist < best[0]:
-                best = (dist, vec)
+            if dist < best:
+                best = dist
                 stack = [(E, vec)]
-            elif dist == best[0]:
+            elif dist == best:
                 stack.append((E, vec))
 
     tiles = set()
