@@ -5,7 +5,6 @@ import fileinput
 import heapq
 import utils
 from typing import Collection, Mapping
-from pprint import pprint
 
 Grid = utils.Grid[str]
 Vec2 = utils.Vec2[int]
@@ -21,12 +20,12 @@ Paths = Mapping[Vertex, set[Vertex]]
 def parse(itr) -> Grid:
     return Grid([*map(str.strip, itr)])
 
-def dijkstra(graph: Graph, S: Vertex, inf_dist: Weight) -> tuple[Distances,
-                                                                 Paths]:
+def dijkstra(graph: Graph, start: Vertex, inf_dist: Weight) -> tuple[Distances,
+                                                                     Paths]:
     dists = {v: inf_dist for v in graph}
-    dists[S] = 0
-    paths = {S: {}}
-    heap = [(0, S)]
+    dists[start] = 0
+    paths = {start: {}}
+    heap = [(0, start)]
     while heap:
         _, v = heapq.heappop(heap)
         dist = dists[v]
@@ -40,10 +39,10 @@ def dijkstra(graph: Graph, S: Vertex, inf_dist: Weight) -> tuple[Distances,
                 paths[adj].add(v)
     return (dists, paths)
 
-def build_graph(grid: Grid, start: Vec2) -> Graph:
+def build_graph(grid: Grid, S: Vec2) -> Graph:
     graph = {}
     visited = set()
-    stack = [(start, start)]
+    stack = [(S, S)]
     while stack:
         prev, pos = stack.pop()
         if (prev, pos) not in visited:

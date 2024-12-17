@@ -17,11 +17,11 @@ Graph  = Mapping[Vertex, Collection[Edge]]
 def parse(itr) -> Grid:
     return Grid([*map(str.strip, itr)])
 
-def dijkstra(graph: Graph, S: Vertex, inf_dist: Weight) \
-        -> Mapping[Vertex, Weight]:
+def dijkstra(graph: Graph, start: Vertex, inf_dist: Weight) -> Mapping[Vertex,
+                                                                       Weight]:
     dists = {v: inf_dist for v in graph}
-    dists[S] = 0
-    heap = [(0, S)]
+    dists[start] = 0
+    heap = [(0, start)]
     while heap:
         _, v = heapq.heappop(heap)
         dist = dists[v]
@@ -32,10 +32,10 @@ def dijkstra(graph: Graph, S: Vertex, inf_dist: Weight) \
                 heapq.heappush(heap, (total_dist, adj))
     return dists
 
-def build_graph(grid: Grid, start: Vec2) -> Graph:
+def build_graph(grid: Grid, S: Vec2) -> Graph:
     graph = {}
     visited = set()
-    stack = [(start, start)]
+    stack = [(S, S)]
     while stack:
         prev, pos = stack.pop()
         if (prev, pos) not in visited:
