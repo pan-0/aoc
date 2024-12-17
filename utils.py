@@ -330,10 +330,11 @@ class GridBase(Generic[T]):
         stack = [self._to_vec(at)]
         while stack:
             vec = stack.pop()
-            if self.is_inbounds(vec) and vec not in visited and key(vec):
+            if self.is_inbounds(vec) and vec not in visited:
                 visited.add(vec)
-                yield vec
-                stack.extend(adj(vec))
+                if key(vec):
+                    yield vec
+                    stack.extend(adj(vec))
 
     def bfs(self, at: Index, key=lambda x: True, adj=None) \
             -> Iterator[Vec2[int]]:
@@ -343,10 +344,11 @@ class GridBase(Generic[T]):
         queue = deque((self._to_vec(at),))
         while queue:
             vec = queue.popleft()
-            if self.is_inbounds(vec) and vec not in visited and key(vec):
+            if self.is_inbounds(vec) and vec not in visited:
                 visited.add(vec)
-                yield vec
-                queue.extend(adj(vec))
+                if key(vec):
+                    yield vec
+                    queue.extend(adj(vec))
 
     def get(self, key: Index, default: Optional[T]=None) -> Optional[T]:
         v = self._to_vec(key)
