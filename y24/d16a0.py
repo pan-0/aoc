@@ -17,7 +17,8 @@ Graph  = Mapping[Vertex, Collection[Edge]]
 def parse(itr) -> Grid:
     return Grid([*map(str.strip, itr)])
 
-def dijkstra(graph: Graph, S: Vertex, inf_dist: int) -> Mapping[Vertex, int]:
+def dijkstra(graph: Graph, S: Vertex, inf_dist: Weight) \
+        -> Mapping[Vertex, Weight]:
     dists = {v: inf_dist for v in graph}
     dists[S] = 0
     heap = [(0, S)]
