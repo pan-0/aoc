@@ -21,7 +21,6 @@ def operand(regs: Registers, opr: int) -> z3.BitVec:
             unreachable("invalid operand: ", opr)
 
 def run(regs: Registers, insns: Instructions, out: int):
-    constraints = []
     for i in range(0, len(insns), 2):
         opr = insns[i + 1]
         match insns[i]:
