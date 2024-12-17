@@ -14,7 +14,7 @@ from collections.abc import Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from functools import partialmethod
-from itertools import chain, islice
+from itertools import chain, islice, starmap, zip_longest
 from typing import (Callable, Generic, NamedTuple, Optional, Self, TypeVar,
                     NoReturn)
 
@@ -166,36 +166,29 @@ class Pair(NamedTuple, Generic[T, U]):
 
 N = TypeVar("N", int, float)
 
-@dataclass(frozen=True)
-class Vec(Generic[N]):
-    scalars: tuple[N, ...]
+class VecBase(tuple[N, ...]):
+    def __new__(cls, *args: N):
+        return tuple.__new__(cls, args)  # WTF?
 
-    def __init__(self, *args: N):
-        object.__setattr__(self, "scalars", args)
+    @staticmethod
+    def _bin_method(op):
+        def f(self: Self, other: Self) -> Self:
+            return type(self)(*starmap(op, zip_longest(self, other,
+                                                       fillvalue=0)))
+        return f
 
-    def __iter__(self):
-        return iter(self.scalars)
+    __add__ = _bin_method(operator.add)
+    __sub__ = _bin_method(operator.sub)
+    __mod__ = _bin_method(operator.mod)
+    __floordiv__ = _bin_method(operator.floordiv)
 
-    def __add__(self, other: Self) -> Self:
-        return type(self)(*map(operator.add, self, other))
+    mul = _bin_method(operator.mul)
+    truediv = _bin_method(operator.truediv)
 
-    def __sub__(self, other: Self) -> Self:
-        return type(self)(*map(operator.sub, self, other))
-
-    def __mul__(self, other: N | Self) -> Self:
-        cls = type(self)
+    def __mul__(self, other: N | Self) -> Self:  # type: ignore[override]
         if isinstance(other, int) or isinstance(other, float):
-            return cls(*map(lambda scalar: scalar * other, self))
-        return cls(*map(operator.mul, self, other))
-
-    def __mod__(self, other: Self) -> Self:
-        return type(self)(*map(operator.mod, self, other))
-
-    def __floordiv__(self, other: Self) -> Self:
-        return type(self)(*map(operator.floordiv, self, other))
-
-    def __truediv__(self, other: Self) -> Vec[float]:
-        return Vec(*map(operator.truediv, self, other))
+            return type(self)(*map(lambda scalar: scalar * other, self))
+        return self.mul(other)
 
     def __neg__(self) -> Self:
         return type(self)(*map(operator.neg, self))
@@ -203,51 +196,37 @@ class Vec(Generic[N]):
     def __abs__(self) -> Self:
         return type(self)(*map(abs, self))
 
-    def __getitem__(self, key: int) -> N:
-        return self.scalars[key]
-
-    def __lt__(self, other: Self) -> bool:
-        return self.scalars < other.scalars
-
-    def __le__(self, other: Self) -> bool:
-        return self.scalars <= other.scalars
-
-    def __ge__(self, other: Self) -> bool:
-        return self.scalars >= other.scalars
-
-    def __gt__(self, other: Self) -> bool:
-        return self.scalars > other.scalars
-
-    def __len__(self) -> int:
-        return len(self.scalars)
-
     def dot(self, other: Self) -> N:
         return sum(self * other)
 
     def len(self) -> float:
         return math.sqrt(self.dot(self))
 
-    def min(self: Vec[int]) -> Vec[int]:
+    def min(self: VecBase[int]) -> VecBase[int]:
         gcd = math.gcd(*self)
         return type(self)(*map(lambda scalar: scalar // gcd, self))
 
     def __repr__(self) -> str:
         return "<" + ' '.join(map(str, self)) + ">"
 
-class Vec2(Vec[N]):
-    def __init__(self, x: N=0, y: N=0):
-        super(Vec2, self).__init__(x, y)
+class Vec(VecBase[N]):
+    def __truediv__(self, other: Self) -> Vec[float]:
+        return Vec(*self.truediv(other))
+
+class Vec2(VecBase[N]):
+    def __new__(cls, x: N=0, y: N=0):
+        return super(cls, cls).__new__(cls, x, y)  # WTF?
 
     def __truediv__(self, other: Self) -> Vec2[float]:
-        return Vec2(*super().__truediv__(other).scalars)
+        return Vec2(*self.truediv(other))
 
     @property
     def x(self) -> N:
-        return self.scalars[0]
+        return self[0]
 
     @property
     def y(self) -> N:
-        return self.scalars[1]
+        return self[1]
 
 @dataclass(frozen=True)
 class Adjacent:
