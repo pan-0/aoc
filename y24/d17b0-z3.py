@@ -12,7 +12,7 @@ def parse(itr) -> Instructions:
     nums = integers(itr)
     return [*islice(nums, 3, None)]
 
-def operand(regs: Registers, opr: int):
+def operand(regs, opr: int):
     match opr:
         case lit if 0 <= lit <= 3: return z3.BitVecVal(lit, BIT_WIDTH) & 3
         case reg if 4 <= reg <= 6: return regs[reg - 4]
