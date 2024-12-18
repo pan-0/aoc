@@ -35,11 +35,9 @@ def dijkstra(graph: Graph, S: Vertex, E: Vertex, inf_dist: int) \
 def build_graph(grid: Grid, S: Vec2) -> Graph:
     graph = {}
     visited = set()
-    for pos in grid.dfs(S,
-                        key=lambda v: grid[v] != '#',
-                        adj=grid.adjacent_cross):
-        graph[pos] = [*filter(lambda adj: grid[adj] != '#',
-                              grid.adjacent_cross(pos))]
+    no_wall = lambda v: grid[v] != '#'
+    for pos in grid.dfs(S, key=no_wall, adj=grid.adjacent_cross):
+        graph[pos] = [*filter(no_wall, grid.adjacent_cross(pos))]
     return graph
 
 def build_grid(bytez: Iterator[Vec2]) -> Grid:
