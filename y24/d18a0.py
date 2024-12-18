@@ -4,7 +4,6 @@
 import fileinput
 import heapq
 import utils
-from collections import defaultdict
 from typing import Collection, Iterator, Mapping
 
 Grid = utils.MutGrid[str]
@@ -34,13 +33,13 @@ def dijkstra(graph: Graph, S: Vertex, E: Vertex, inf_dist: int) \
     return dists
 
 def build_graph(grid: Grid, S: Vec2) -> Graph:
-    graph = defaultdict(list)
+    graph = {}
     visited = set()
     for pos in grid.dfs(S,
                         key=lambda v: grid[v] != '#',
                         adj=grid.adjacent_cross):
-        graph[pos].extend(filter(lambda adj: grid[adj] != '#',
-                                 grid.adjacent_cross(pos)))
+        graph[pos] = [*filter(lambda adj: grid[adj] != '#',
+                              grid.adjacent_cross(pos))]
     return graph
 
 def build_grid(bytez: Iterator[Vec2]) -> Grid:
