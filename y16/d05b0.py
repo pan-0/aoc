@@ -1,6 +1,6 @@
 # {{{
+# Copyright (C) 2025 by pan <pan_@disroot.org>
 # SPDX-License-Identifier: 0BSD
-# Copyright (C) 2024 by pan <pan_@disroot.org>
 
 # vi: foldmethod=marker
 from __future__ import annotations
