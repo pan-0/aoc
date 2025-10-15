@@ -1,31 +1,36 @@
+# Copyright (C) 2025 by pan <pan_@disroot.org>
 # SPDX-License-Identifier: 0BSD
-# Copyright (C) 2024 by pan <pan_@disroot.org>
 
 from __future__ import annotations
 
+import argparse
 import copy
 import io
 import math
 import operator
 import re
 import sys
+
 from collections import deque
-from collections.abc import Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from functools import partialmethod
+from functools import partial, partialmethod
 from itertools import chain, islice
-from typing import (Callable, Generic, NamedTuple, Optional, Self, TypeVar,
-                    NoReturn)
+from pathlib import Path
+from typing import (Any, Generic, NamedTuple, Optional, Self, TypeVar,
+                    NoReturn, TextIO, cast)
 
 T = TypeVar("T")
 U = TypeVar("U")
 
+frozen = partial(dataclass, frozen=True)
+
 try:
-    from itertools import batched  # type: ignore[attr-defined]
+    from itertools import batched
 except ImportError:
-    def batched(itr: Iterator[T], n: int, *, strict=False) \
-            -> Iterator[tuple[T, ...]]:
+    def batched(itr: Iterator[T],  # type: ignore[no-redef]
+                n: int, *, strict: bool=False) -> Iterator[tuple[T, ...]]:
         # batched("ABCDEFG", 3) -> ABC DEF G
         if n < 1:
             raise ValueError("n must be at least one")
@@ -38,11 +43,11 @@ except ImportError:
 class UnreachableError(RuntimeError):
     pass
 
-def unreachable(*args, **kwargs) -> NoReturn:
+def unreachable(*args, **kwargs) -> NoReturn:  # type: ignore
     print(*args, file=sys.stderr, **kwargs)
     raise UnreachableError
 
-def integers(itr: Iterator[str], signed=True) -> Iterator[int]:
+def integers(itr: Iterator[str], signed: bool=True) -> Iterator[int]:
     uint_pat = r"(?:0|[1-9]\d*)"
     pat = fr"(-?{uint_pat})" if signed else fr"({uint_pat})"
     nums = chain.from_iterable(map(lambda s: re.finditer(pat, s), itr))
@@ -52,16 +57,20 @@ def ceildiv(x: int, y: int) -> int:
     assert x > 0
     return 1 + (x - 1) // y
 
-def first(itr: Iterator[T], key=lambda x: True) -> Optional[T]:
-    return next(chain(filter(key, itr), (None,)))
+def first(itr: Iterator[T], key=lambda x: True) -> Optional[T]:  # type: ignore
+    try:
+        return next(filter(key, itr))  # type: ignore
+    except StopIteration:
+        return None
 
-def last(itr: Iterator[T], key=lambda x: True) -> Optional[T]:
+def last(itr: Iterator[T],
+         key: Callable[[T], bool]=lambda x: True) -> Optional[T]:
     r = None
     for x in filter(key, itr):
         r = x
     return r
 
-def take(itr: Iterator[T], n: int, *, strict=False) -> Iterator[T]:
+def take(itr: Iterator[T], n: int, *, strict: bool=False) -> Iterator[T]:
     # take("ABCDEFG",  3) -> ABC
     # take("ABCDEFG",  0) ->
     # take("ABCDEFG", -1) -> ABCDEFG
@@ -82,18 +91,57 @@ def ilen(itr: Iterator[T]) -> int:
         pass
     return i
 
-def apply(func: Callable[..., T], *iterables):
+def apply(func: Callable[..., T], *iterables) -> None:  # type: ignore
     for args in zip(*iterables):
         func(*args)
 
 def identity(x: T) -> T:
     return x
 
-def joinlines(itr: Iterator[str], strip=True) -> str:
+def joinlines(itr: Iterator[str], strip: bool=True) -> str:
     return "".join(map(str.strip if strip else identity, itr))
 
+EmptyIter = Iterator[None]  # Type (`None`) doesn't matter.
+
+def empty_iter() -> EmptyIter:
+    yield from ()
+
+def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
+         unpack: bool=False,
+         **kwargs) -> None:
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("filepath", nargs='?', type=str, default=None)
+    group.add_argument("-s", "--string", required=False, type=str)
+    args = parser.parse_args()
+
+    file: Optional[TextIO]
+    itr: Iterator[str]
+    if args.string is not None:
+        file = None
+        itr = iter((cast(str, args.string),))
+    else:
+        filepath = cast(Optional[str], args.filepath)
+        file = sys.stdin if filepath is None or filepath == "-" \
+               else open(Path(filepath), "r", encoding="utf-8")
+        itr = iter(file)
+
+    out = go(itr)
+    if unpack:
+        for x in out:
+            if type(x) is tuple:
+                print(*x, **kwargs)
+            else:
+                print(x, **kwargs)
+    else:
+        for x in out:
+            print(x, **kwargs)
+
+    if file is not None and file is not sys.stdin:
+        file.close()
+
 class DebugPrint:
-    def __init__(self, enabled=True):
+    def __init__(self, enabled: bool=True):
         self.enabled = enabled
 
     def on(self) -> Self:
@@ -108,46 +156,42 @@ class DebugPrint:
         self.enabled ^= True
         return self
 
-    def peek(self, itr: Iterator[T], sep=" ", end="\n") -> Iterator[T]:
+    def peek(self, itr: Iterator[T], sep: str=" ", end: str="\n") \
+            -> Iterator[T]:
         for x in itr:
             self(x, end=sep)
             yield x
         self(end=end)
 
-    def map(self,
+    class MapFmt(Enum):
+        IN     = 0  # => in
+        OUT    = 1  # => out
+        IN_OUT = 2  # => in -> out
+
+    def map(self,  # type: ignore
             func: Callable[..., T],
             *iterables,
-            sep=", ",
-            end="\n",
-            out=0) -> Iterator[T]:
-        """
-        out=0 => in
-        out=1 => in -> out
-        out=2 => out
-        """
-        if not 0 <= out <= 2:
-            raise ValueError
-
+            sep: str=", ",
+            end: str="\n",
+            fmt: MapFmt=MapFmt.IN_OUT) -> Iterator[T]:
+        pat = ("{0}", "{1}", "{0} -> {1}")[fmt.value]
         for args in zip(*iterables):
             r = func(*args)
-            self(("{0}",
-                  "{0} -> {1}",
-                  "{1}")[out].format(args if len(args) > 1 else args[0], r),
-                 end=sep)
+            self(pat.format(args if len(args) > 1 else args[0], r), end=sep)
             yield r
         self(end=end)
 
-    def take(self, itr: Iterator[T], sep=" ", end="\n") -> Self:
+    def take(self, itr: Iterator[T], sep: str=" ", end: str="\n") -> Self:
         for x in itr:
             self(x, end=sep)
         self(end=end)
         return self
 
-    def identity(self, x: T, end="\n") -> T:
+    def identity(self, x: T, end: str ="\n") -> T:
         self(x, end=end)
         return x
 
-    def __call__(self, *args, **kwargs) -> Self:
+    def __call__(self, *args, **kwargs) -> Self:  # type: ignore
         if self.enabled:
             print(*args, **kwargs)
         return self
@@ -173,7 +217,7 @@ class Vec(Generic[N]):
     def __init__(self, *args: N):
         object.__setattr__(self, "scalars", args)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[N]:
         return iter(self.scalars)
 
     def __add__(self, other: Self) -> Self:
@@ -322,8 +366,11 @@ class GridBase(Generic[T]):
     adjacent_diag = partialmethod(_adjacent, probes=ADJACENT_DIAG)
     adjacent_cross = partialmethod(_adjacent, probes=ADJACENT_CROSS)
 
-    def dfs(self, at: Index, key=lambda x: True, adj=None) \
-            -> Iterator[Vec2[int]]:
+    def dfs(self,
+            at: Index,
+            key: Callable[[Vec2[int]], bool]=lambda x: True,
+            adj: Optional[Callable[[Index], Iterator[Vec2[int]]]]=None) \
+                -> Iterator[Vec2[int]]:
         if adj is None:
             adj = self.adjacent
         visited = set()
@@ -336,8 +383,11 @@ class GridBase(Generic[T]):
                     yield vec
                     stack.extend(adj(vec))
 
-    def bfs(self, at: Index, key=lambda x: True, adj=None) \
-            -> Iterator[Vec2[int]]:
+    def bfs(self,
+            at: Index,
+            key: Callable[[Vec2[int]], bool]=lambda x: True,
+            adj: Optional[Callable[[Index], Iterator[Vec2[int]]]]=None) \
+                -> Iterator[Vec2[int]]:
         if adj is None:
             adj = self.adjacent
         visited = set()
@@ -391,7 +441,10 @@ class GridBase(Generic[T]):
     def count(self, val: T) -> int:
         return sum(map(lambda row: row.count(val), self.data))
 
-    def to_str(self, delim="", rows=False, edges=False) -> str:
+    def to_str(self,
+               delim: str="",
+               rows: bool=False,
+               edges: bool=False) -> str:
         buf = io.StringIO()
         row_pad = len(str(self.rows - 1))
         col_pad = max(map(lambda row: max(map(len, map(str, row))), self))
@@ -466,13 +519,16 @@ class Grid(GridBase[T]):
     def __init__(self, data: Sequence[Sequence[T]]):
         super().__init__(data)
         self.repr: Optional[str] = None
+        self.hash: Optional[int] = None
 
     def __hash__(self) -> int:
-        h = hash((self.rows, self.cols))
-        for row in self.data:
-            for col in row:
-                h ^= hash(col)
-        return h
+        if self.hash is None:
+            h = hash((self.rows, self.cols))
+            for row in self.data:
+                for col in row:
+                    h = hash((h, col))
+            self.hash = h
+        return self.hash
 
     def __repr__(self) -> str:
         if self.repr is None:
@@ -497,7 +553,7 @@ class MutGrid(GridBase[T]):
     def copy(self) -> Self:
         return type(self)(copy.deepcopy(self.mut_data))
 
-    def clear_with(self, val: T):
+    def clear_with(self, val: T) -> None:
         for row in self.mut_data:
             for j in range(len(row)):
                 row[j] = val
@@ -507,7 +563,7 @@ class MutGrid(GridBase[T]):
         self.mut_data[v.y][v.x] = val
         return val
 
-def main():
+def test() -> None:
     #G = Grid(["abcdeeeeee",
     #          "kbcdeeeeee",
     #          "ebcdeeeeee",
@@ -531,5 +587,5 @@ def main():
           sep='\n')
 
 if __name__ == "__main__":
-    main()
+    test()
     raise SystemExit
