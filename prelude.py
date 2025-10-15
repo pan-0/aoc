@@ -22,8 +22,7 @@ from math import prod, sqrt, gcd, lcm
 from types import EllipsisType
 from typing import Any, NamedTuple, Optional, TypeAlias, cast
 from utils import (Adjacents, batched, take, ilen, integers, ceildiv, first,
-                   last, apply, identity, joinlines, frozen, Pair, EmptyIter,
-                   empty_iter)
+                   last, apply, identity, joinlines, frozen, Pair, empty_iter)
 
 Input: TypeAlias = Iterator[str]
 

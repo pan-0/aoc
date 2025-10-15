@@ -101,9 +101,7 @@ def identity(x: T) -> T:
 def joinlines(itr: Iterator[str], strip: bool=True) -> str:
     return "".join(map(str.strip if strip else identity, itr))
 
-EmptyIter = Iterator[None]  # Type (`None`) doesn't matter.
-
-def empty_iter() -> EmptyIter:
+def empty_iter() -> Iterator[None]:
     yield from ()
 
 def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
