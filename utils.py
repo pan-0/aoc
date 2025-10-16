@@ -26,8 +26,70 @@ U = TypeVar("U")
 
 frozen = partial(dataclass, frozen=True)
 
+
+#
+# Misc.
+#
+
+class UnreachableError(RuntimeError):
+    pass
+
+def unreachable(*args, **kwargs) -> NoReturn:  # type: ignore
+    print(*args, file=sys.stderr, **kwargs)
+    raise UnreachableError
+
+def identity(x: T) -> T:
+    return x
+
+def ceildiv(x: int, y: int) -> int:
+    assert x > 0
+    return 1 + (x - 1) // y
+
+def some(opt: Optional[T]) -> T:
+    assert opt is not None
+    return opt
+
+def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
+         unpack: bool=False,
+         **kwargs) -> None:
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("filepath", nargs='?', type=str, default=None)
+    group.add_argument("-s", "--string", required=False, type=str)
+    args = parser.parse_args()
+
+    file: Optional[TextIO]
+    itr: Iterator[str]
+    if args.string is not None:
+        file = None
+        itr = iter((cast(str, args.string),))
+    else:
+        filepath = cast(Optional[str], args.filepath)
+        file = sys.stdin if filepath is None or filepath == "-" \
+               else open(Path(filepath), "r", encoding="utf-8")
+        itr = iter(file)
+
+    out = go(map(str.strip, itr))
+    if unpack:
+        for x in out:
+            if type(x) is tuple:
+                print(*x, **kwargs)
+            else:
+                print(x, **kwargs)
+    else:
+        for x in out:
+            print(x, **kwargs)
+
+    if file is not None and file is not sys.stdin:
+        file.close()
+
+
+#
+# Iterators.
+#
+
 try:
-    from itertools import batched
+    from itertools import batched as batched
 except ImportError:
     def batched(itr: Iterator[T],  # type: ignore[no-redef]
                 n: int, *, strict: bool=False) -> Iterator[tuple[T, ...]]:
@@ -40,22 +102,11 @@ except ImportError:
                 raise ValueError("batched(): incomplete batch")
             yield batch
 
-class UnreachableError(RuntimeError):
-    pass
-
-def unreachable(*args, **kwargs) -> NoReturn:  # type: ignore
-    print(*args, file=sys.stderr, **kwargs)
-    raise UnreachableError
-
 def integers(itr: Iterator[str], signed: bool=True) -> Iterator[int]:
     uint_pat = r"(?:0|[1-9]\d*)"
     pat = fr"(-?{uint_pat})" if signed else fr"({uint_pat})"
     nums = chain.from_iterable(map(lambda s: re.finditer(pat, s), itr))
     return map(lambda match: int(match[0]), nums)
-
-def ceildiv(x: int, y: int) -> int:
-    assert x > 0
-    return 1 + (x - 1) // y
 
 def first(itr: Iterator[T], key=lambda x: True) -> Optional[T]:  # type: ignore
     try:
@@ -95,48 +146,25 @@ def apply(func: Callable[..., T], *iterables) -> None:  # type: ignore
     for args in zip(*iterables):
         func(*args)
 
-def identity(x: T) -> T:
-    return x
-
 def joinlines(itr: Iterator[str], strip: bool=True) -> str:
     return "".join(map(str.strip if strip else identity, itr))
+
+def nth(stream: Sequence[T] | Iterator[T], n: int) -> Optional[T]:
+    if isinstance(stream, Sequence):
+        return stream[n] if n < len(stream) else None
+
+    for i, x in enumerate(stream):
+        if i == n:
+            return x
+    return None
 
 def empty_iter() -> Iterator[None]:
     yield from ()
 
-def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
-         unpack: bool=False,
-         **kwargs) -> None:
-    parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("filepath", nargs='?', type=str, default=None)
-    group.add_argument("-s", "--string", required=False, type=str)
-    args = parser.parse_args()
 
-    file: Optional[TextIO]
-    itr: Iterator[str]
-    if args.string is not None:
-        file = None
-        itr = iter((cast(str, args.string),))
-    else:
-        filepath = cast(Optional[str], args.filepath)
-        file = sys.stdin if filepath is None or filepath == "-" \
-               else open(Path(filepath), "r", encoding="utf-8")
-        itr = iter(file)
-
-    out = go(itr)
-    if unpack:
-        for x in out:
-            if type(x) is tuple:
-                print(*x, **kwargs)
-            else:
-                print(x, **kwargs)
-    else:
-        for x in out:
-            print(x, **kwargs)
-
-    if file is not None and file is not sys.stdin:
-        file.close()
+#
+# Debug.
+#
 
 class DebugPrint:
     def __init__(self, enabled: bool=True):
@@ -194,17 +222,10 @@ class DebugPrint:
             print(*args, **kwargs)
         return self
 
-class Pair(NamedTuple, Generic[T, U]):
-    f: T
-    s: U
 
-    def __hash__(self) -> int:
-        return hash(self.f) ^ hash(self.s)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Pair):
-            raise ValueError
-        return {self.f, self.s} == {other.f, other.s}
+#
+# Geometry.
+#
 
 N = TypeVar("N", int, float)
 
@@ -226,7 +247,7 @@ class Vec(Generic[N]):
 
     def __mul__(self, other: N | Self) -> Self:
         cls = type(self)
-        if isinstance(other, int) or isinstance(other, float):
+        if isinstance(other, (int, float)):
             return cls(*map(lambda scalar: scalar * other, self))
         return cls(*map(operator.mul, self, other))
 
@@ -315,6 +336,11 @@ class Adjacents(Enum):
 
     def __str__(self) -> str:
         return self.value.sym
+
+
+#
+# Grid.
+#
 
 class GridBase(Generic[T]):
     Index = tuple[int, int] | Vec2[int]
@@ -516,8 +542,8 @@ class GridBase(Generic[T]):
 class Grid(GridBase[T]):
     def __init__(self, data: Sequence[Sequence[T]]):
         super().__init__(data)
-        self.repr: Optional[str] = None
         self.hash: Optional[int] = None
+        self.repr: Optional[str] = None
 
     def __hash__(self) -> int:
         if self.hash is None:
@@ -560,6 +586,52 @@ class MutGrid(GridBase[T]):
         v = self._to_vec(key)
         self.mut_data[v.y][v.x] = val
         return val
+
+
+#
+# Functional programming.
+#
+
+@dataclass(frozen=True)
+class Composer[X, Y]:
+    f: Callable[[X], Y]
+
+    def __call__[Z](self, g: Callable[[Z], X]) -> Composer[Z, Y]:
+        def fog(z: Z) -> Y:
+            return self.f(g(z))
+        return Composer(fog)
+
+    # Composer(...) << x
+    def __lshift__(self, x: X) -> Y:
+        return self.f(x)
+
+@dataclass(frozen=True)
+class Pipeline[X, Y]:
+    f: Callable[[X], Y]
+
+    def __call__[Z](self, g: Callable[[Y], Z]) -> Pipeline[X, Z]:
+        def gof(x: X) -> Z:
+            return g(self.f(x))
+        return Pipeline(gof)
+
+    # x >> Pipeline(...)
+    def __rrshift__(self, x: X) -> Y:
+        return self.f(x)
+
+# compose(f, g)(x) = f(g(x))
+def compose[X, Y, Z](f: Callable[[X], Y], g: Callable[[Z], X]) \
+        -> Callable[[Z], Y]:
+    return Composer(f)(g).f
+
+# pipe(f, g)(x) = g(f(x))
+def pipe[X, Y, Z](f: Callable[[X], Y], g: Callable[[Y], Z]) \
+        -> Callable[[X], Z]:
+    return Pipeline(f)(g).f
+
+
+#
+#
+#
 
 def test() -> None:
     #G = Grid(["abcdeeeeee",

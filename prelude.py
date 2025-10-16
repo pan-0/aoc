@@ -20,9 +20,10 @@ from itertools import (chain, combinations, dropwhile, islice, pairwise,
                        zip_longest, filterfalse)
 from math import prod, sqrt, gcd, lcm
 from types import EllipsisType
-from typing import Any, NamedTuple, Optional, TypeAlias, cast
+from typing import Any, NamedTuple, Optional, cast
 from utils import (Adjacents, batched, take, ilen, integers, ceildiv, first,
-                   last, apply, identity, joinlines, frozen, Pair, empty_iter)
+                   last, apply, identity, joinlines, frozen, Pair, empty_iter,
+                   Composer, Pipeline, compose, pipe, nth)
 
-Input: TypeAlias = Iterator[str]
+type Input = Iterator[str]
 
