@@ -51,16 +51,19 @@ def some(opt: Optional[T]) -> T:
 
 def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
          unpack: bool=False,
+         string: bool=True,
+         strip: bool=True,
          **kwargs) -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument("filepath", nargs='?', type=str, default=None)
-    group.add_argument("-s", "--string", required=False, type=str)
+    if string:
+        group.add_argument("-s", "--string", required=False, type=str)
     args = parser.parse_args()
 
     file: Optional[TextIO]
     itr: Iterator[str]
-    if args.string is not None:
+    if string and args.string is not None:
         file = None
         itr = iter((cast(str, args.string),))
     else:
@@ -69,7 +72,7 @@ def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
                else open(Path(filepath), "r", encoding="utf-8")
         itr = iter(file)
 
-    out = go(map(str.strip, itr))
+    out = go(map(str.strip if strip else identity, itr))
     if unpack:
         for x in out:
             if type(x) is tuple:
