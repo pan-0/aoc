@@ -49,10 +49,26 @@ def some(opt: Optional[T]) -> T:
     assert opt is not None
     return opt
 
+def trim_newline(itr: Iterator[str]) -> Iterator[str]:
+    first: str
+    try:
+        first = next(itr)
+    except StopIteration:
+        return
+    try:
+        while True:
+            second = next(itr)
+            yield first
+            first = second
+    except StopIteration:
+        if first != "\n":
+            yield first
+
 def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
          unpack: bool=False,
          string: bool=True,
          strip: bool=True,
+         trimnl: bool=True,
          **kwargs) -> None:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
@@ -72,7 +88,8 @@ def main(go: Callable[[Iterator[str]], Iterator[Any]],  # type: ignore
                else open(Path(filepath), "r", encoding="utf-8")
         itr = iter(file)
 
-    out = go(map(str.strip if strip else identity, itr))
+    out = go(map(str.strip if strip else identity,
+                 trim_newline(itr) if trimnl else itr))
     if unpack:
         for x in out:
             if type(x) is tuple:

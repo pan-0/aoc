@@ -10,16 +10,15 @@ Vec2: TypeAlias = utils.Vec2[int]
 dprint = utils.DebugPrint()
 # }}}
 
-def parse(itr: Iterator[str]) -> Iterator[Any]:
-    return map(lambda line: {'L': -1, 'R': 1}[line[0]] * int(line[1:]),
-               filter(bool, itr))
+def parse(itr: Iterator[str]) -> Iterator[int]:
+    return map(lambda line: {'L': -1, 'R': 1}[line[0]] * int(line[1:]), itr)
 
-def sign(x):
+def sign(x: int) -> int:
     return 1 if x >= 0 else -1
 
-def go(inp: Input) -> Iterator[Any]:
-    dial = 50
+def go(inp: Input) -> Iterator[int]:
     data = parse(inp)
+    dial = 50
     count = 0
     for rot in data:
         s = sign(rot)
