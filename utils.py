@@ -1,4 +1,4 @@
-# Copyright (C) 2025 by pan <pan_@disroot.org>
+te# Copyright (C) 2025 by pan <pan_@disroot.org>
 # SPDX-License-Identifier: 0BSD
 
 from __future__ import annotations
@@ -537,16 +537,16 @@ class GridBase(Generic[T]):
             raise ValueError
         return self.data == other.data
 
-    def iter_flat(self) -> Iterator[T]:
+    def ravel(self) -> Iterator[T]:
         for row in self.data:
             yield from row
 
-    def iter_cords(self) -> Iterator[Vec2[int]]:
+    def cords(self) -> Iterator[Vec2[int]]:
         for i in range(self.rows):
             for j in range(self.cols):
                 yield Vec2(j, i)
 
-    def iter_pairs(self) -> Iterator[tuple[Vec2[int], T]]:
+    def pairs(self) -> Iterator[tuple[Vec2[int], T]]:
         for i, row in enumerate(self.data):
             for j, item in enumerate(row):
                 yield (Vec2(j, i), item)
