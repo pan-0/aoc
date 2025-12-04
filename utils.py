@@ -537,6 +537,20 @@ class GridBase(Generic[T]):
             raise ValueError
         return self.data == other.data
 
+    def iter_flat(self) -> Iterator[T]:
+        for row in self.data:
+            yield from row
+
+    def iter_cords(self) -> Iterator[Vec2[int]]:
+        for i in range(self.rows):
+            for j in range(self.cols):
+                yield Vec2(j, i)
+
+    def iter_pairs(self) -> Iterator[tuple[Vec2[int], T]]:
+        for i, row in enumerate(self.data):
+            for j, item in enumerate(row):
+                yield (Vec2(j, i), item)
+
     def __repr__(self) -> str:
         buf = io.StringIO()
         row_pad = len(str(self.rows - 1))
