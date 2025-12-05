@@ -178,7 +178,7 @@ def nth(stream: Sequence[T] | Iterator[T], n: int) -> Optional[T]:
             return x
     return None
 
-def empty_iter() -> Iterator[None]:
+def empty_iter() -> Iterator[T]:
     yield from ()
 
 
