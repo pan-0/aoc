@@ -41,10 +41,6 @@ def unreachable(*args, **kwargs) -> NoReturn:  # type: ignore
 def identity(x: T) -> T:
     return x
 
-def ceildiv(x: int, y: int) -> int:
-    assert x > 0
-    return 1 + (x - 1) // y
-
 def some(opt: Optional[T]) -> T:
     assert opt is not None
     return opt
@@ -665,6 +661,44 @@ def compose[X, Y, Z](f: Callable[[X], Y], g: Callable[[Z], X]) \
 def pipe[X, Y, Z](f: Callable[[X], Y], g: Callable[[Y], Z]) \
         -> Callable[[X], Z]:
     return Pipeline(f)(g).f
+
+
+#
+# Math
+#
+
+def ceildiv(x: int, y: int) -> int:
+    return -(x // -y)
+
+def floordiv(x: int, y: int) -> int:
+    return x // y
+
+# Same as C's `/`.
+def truncdiv(x: int, y :int) -> int:
+    return ceildiv(x, y) if (x < 0) != (y < 0) else x // y
+
+# Same as C's `%`.
+def remainder(x: int, y: int) -> int:
+    return (-1 if x < 0 else 1) * (abs(x) % abs(y))
+
+def euclidiv(x: int, y: int) -> int:
+    q = truncdiv(x, y)
+    r = remainder(x, y)
+    if r < 0:
+        if y > 0:
+            q -= 1
+        else:
+            q += 1
+    return q
+
+def euclidmod(x: int, y: int) -> int:
+    r = remainder(x, y)
+    if r < 0:
+        if d > 0:
+            r += d
+        else:
+            r -= d
+    return r
 
 
 #
