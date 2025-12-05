@@ -23,7 +23,7 @@ from types import EllipsisType
 from typing import Any, NamedTuple, Optional, cast
 from utils import (Adjacents, batched, take, ilen, integers, ceildiv, first,
                    last, apply, identity, joinlines, frozen, empty_iter,
-                   Composer, Pipeline, compose, pipe, nth)
+                   Composer, Pipeline, compose, pipe, nth, swap_pop)
 
 type Input = Iterator[str]
 

@@ -49,6 +49,10 @@ def some(opt: Optional[T]) -> T:
     assert opt is not None
     return opt
 
+def swap_pop(L: list[T], idx: int) -> T:
+    L[idx], L[-1] = L[-1], L[idx]
+    return L.pop()
+
 def trim_newline(itr: Iterator[str]) -> Iterator[str]:
     first: str
     try:
