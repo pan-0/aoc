@@ -5,9 +5,6 @@
 # vi: foldmethod=marker
 from __future__ import annotations
 from prelude import *
-
-Vec2: TypeAlias = utils.Vec2[int]
-dprint = utils.DebugPrint()
 # }}}
 
 def parse(line) -> Iterator[tuple[int, int]]:

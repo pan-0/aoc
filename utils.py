@@ -1,4 +1,4 @@
-te# Copyright (C) 2025 by pan <pan_@disroot.org>
+# Copyright (C) 2025 by pan <pan_@disroot.org>
 # SPDX-License-Identifier: 0BSD
 
 from __future__ import annotations
