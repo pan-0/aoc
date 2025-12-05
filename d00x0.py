@@ -1,5 +1,5 @@
 # {{{
-# Copyright (C) 2025 by pan <pan_@disroot.org>
+# Copyright 2025, pan (pan_@disroot.org)
 # SPDX-License-Identifier: 0BSD
 
 # vi: foldmethod=marker
@@ -11,7 +11,7 @@ dprint = utils.DebugPrint()
 # }}}
 
 def parse(itr: Iterator[str]) -> Iterator[Any]:
-    return map(str.strip, itr)
+    return map(identity, itr)
 
 def go(inp: Input) -> Iterator[Any]:
     data = parse(inp)
