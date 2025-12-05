@@ -7,7 +7,7 @@ from __future__ import annotations
 from prelude import *
 # }}}
 
-def parse(itr: Iterator[str]) -> tuple[list[int, int], Iterator[int]]:
+def parse(itr: Iterator[str]) -> tuple[list[tuple[int, int]], Iterator[int]]:
     return ([*map(lambda rng: (*map(int, rng.split('-')),),
                   takewhile(lambda line: line != "", itr))],
             map(int, itr))
