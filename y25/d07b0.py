@@ -12,7 +12,7 @@ Grid = utils.Grid[str]
 def go(inp: Input) -> Iterator[str]:
     grid = Grid([*inp])
     beams = Counter((grid.find('S'),))
-    timelines = 1
+    timelines = 0
     while beams:
         new_beams = Counter()
         for beam, count in beams.items():
@@ -23,9 +23,10 @@ def go(inp: Input) -> Iterator[str]:
                     right = fw + Adjacents.RIGHT.vec
                     new_beams[left] += count
                     new_beams[right] += count
-                    timelines += count
                 else:
                     new_beams[fw] += count
+            else:
+                timelines += count
         beams = new_beams
     yield timelines
 
