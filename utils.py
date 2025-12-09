@@ -11,15 +11,17 @@ import operator
 import re
 import sys
 
+from abc import abstractmethod
 from collections import deque
-from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from collections.abc import (Callable, Iterator, Iterable, MutableSequence,
+                             Sequence)
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial, partialmethod
 from itertools import chain, islice
 from pathlib import Path
 from typing import (Any, Generic, NamedTuple, Optional, Self, TypeVar,
-                    NoReturn, TextIO, cast)
+                    NoReturn, TextIO, Protocol, cast)
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -180,6 +182,27 @@ def nth(stream: Sequence[T] | Iterator[T], n: int) -> Optional[T]:
 
 def empty_iter() -> Iterator[T]:
     yield from ()
+
+class Comparable(Protocol):
+    def __lt__(self, other: Self) -> bool: ...
+    def __gt__(self, other: Self) -> bool: ...
+
+CT = TypeVar("CT", bound=Comparable)
+
+def minmax(itr: Iterable[CT]) -> Optional[tuple[CT, CT]]:
+    it = iter(itr)
+    minval: CT
+    maxval: CT
+    try:
+        minval = maxval = next(it)
+    except StopIteration:
+        return None
+    for x in it:
+        if x < minval:
+            minval = x
+        if x > maxval:
+            maxval = x
+    return (minval, maxval)
 
 
 #
@@ -402,7 +425,8 @@ class GridBase(Generic[T]):
         v = self._to_vec(idx)
         return 0 <= v.x < self.cols and 0 <= v.y < self.rows
 
-    def _adjacent(self, idx: Index, probes=ADJACENT) -> Iterator[Vec2[int]]:
+    def _adjacent(self, idx: Index, probes: tuple[Vec2[int], ...]=ADJACENT) \
+            -> Iterator[Vec2[int]]:
         v = self._to_vec(idx)
         return filter(self.is_inbounds, map(lambda offs: v + offs, probes))
 
@@ -451,7 +475,10 @@ class GridBase(Generic[T]):
     def row(self, idx: int) -> Sequence[T]:
         return self.data[idx]
 
-    def find(self, val: T, start=Vec2(0, 0), stop=Vec2(-1, -1)) -> Vec2[int]:
+    def find(self,
+             val: T,
+             start: Vec2[int]=Vec2(0, 0),
+             stop: Vec2[int]=Vec2(-1, -1)) -> Vec2[int]:
         if stop < Vec2(0, 0):
             stop = Vec2(self.cols, self.rows)
 
@@ -466,7 +493,10 @@ class GridBase(Generic[T]):
                 return Vec2(j, i)
         return Vec2(-1, -1)
 
-    def rfind(self, val: T, start=Vec2(0, 0), stop=Vec2(-1, -1)) -> Vec2[int]:
+    def rfind(self,
+              val: T,
+              start: Vec2[int]=Vec2(0, 0),
+              stop: Vec2[int]=Vec2(-1, -1)) -> Vec2[int]:
         if stop < Vec2(0, 0):
             stop = Vec2(self.cols, self.rows)
 
@@ -694,10 +724,10 @@ def euclidiv(x: int, y: int) -> int:
 def euclidmod(x: int, y: int) -> int:
     r = remainder(x, y)
     if r < 0:
-        if d > 0:
-            r += d
+        if y > 0:
+            r += y
         else:
-            r -= d
+            r -= y
     return r
 
 
