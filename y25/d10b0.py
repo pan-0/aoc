@@ -54,9 +54,7 @@ def solve(machine: Machine) -> int:
 
 def go(inp: Input) -> Iterator[int]:
     data = parse(inp)
-    acc = 0
-    for machine in data:
-        acc += solve(machine)
+    acc = sum(map(solve, data))
     yield acc
 
 # {{{

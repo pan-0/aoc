@@ -6,9 +6,6 @@
 from __future__ import annotations
 from prelude import *
 # }}}
-import z3
-
-BIT_WIDTH = 16
 
 @dataclass(frozen=True)
 class Machine:
@@ -34,25 +31,23 @@ def parse(itr: Iterator[str]) -> Iterator[Machine]:
 
         yield Machine(bits, lights, buttons)
 
+def do_add(s: set[int], e: int) -> bool:
+    l = len(s)
+    s.add(e)
+    return l != len(s)
+
 def solve(machine: Machine) -> int:
-    s = z3.Solver()
+    mask = (1 << machine.bits) - 1
+    visited = set()
+    queue = deque([(0, 0)])
+    while queue:
+        state, depth = queue.popleft()
+        if do_add(visited, state):
+            if state & mask == machine.lights:
+                return depth
 
-    coeffs = []
-    rhs = z3.BitVecVal(0, BIT_WIDTH)
-    for btn in machine.buttons:
-        coeff = z3.BitVec(f"coeff_{len(coeffs)}", BIT_WIDTH)
-        s.add(z3.And(coeff >= 0, coeff <= 1))
-        rhs = rhs ^ (coeff * z3.BitVecVal(btn, BIT_WIDTH))
-        coeffs.append(coeff)
-
-    mask = z3.BitVecVal((1 << machine.bits) - 1, BIT_WIDTH)
-    lights = z3.BitVecVal(machine.lights, BIT_WIDTH)
-    s.add(lights == (rhs & mask))
-    pushes = 0
-    while s.check() == z3.sat:
-        m = s.model()
-        pushes = sum(map(lambda coeff: m[coeff].as_long(), coeffs))
-        s.add(z3.Sum(coeffs) < pushes)
+            queue.extend(map(lambda button: (state ^ button, depth + 1),
+                             machine.buttons))
     return pushes
 
 def go(inp: Input) -> Iterator[int]:
