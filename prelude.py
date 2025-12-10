@@ -24,7 +24,7 @@ from typing import Any, NamedTuple, Optional, cast
 from utils import (Adjacents, batched, take, ilen, integers, ceildiv, first,
                    last, apply, identity, joinlines, frozen, empty_iter,
                    Composer, Pipeline, compose, pipe, nth, swap_pop, truncdiv,
-                   euclidiv, euclidmod, unreachable, some)
+                   euclidiv, euclidmod, unreachable, some, minmax)
 
 type Input = Iterator[str]
 

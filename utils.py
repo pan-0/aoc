@@ -189,15 +189,19 @@ class Comparable(Protocol):
 
 CT = TypeVar("CT", bound=Comparable)
 
-def minmax(itr: Iterable[CT]) -> Optional[tuple[CT, CT]]:
+def ct_identity(x: CT) -> CT:
+    return x
+
+def minmax(itr: Iterable[CT], key: Callable[[CT], CT]=ct_identity) \
+        -> Optional[tuple[CT, CT]]:
     it = iter(itr)
     minval: CT
     maxval: CT
     try:
-        minval = maxval = next(it)
+        minval = maxval = key(next(it))
     except StopIteration:
         return None
-    for x in it:
+    for x in map(key, it):
         if x < minval:
             minval = x
         if x > maxval:
